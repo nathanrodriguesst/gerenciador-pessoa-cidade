@@ -9,6 +9,8 @@ import com.vsm.gerenciador_pessoa_cidade.entities.Cidade;
 import com.vsm.gerenciador_pessoa_cidade.entities.Pessoa;
 import com.vsm.gerenciador_pessoa_cidade.dtos.PessoaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -41,8 +43,9 @@ public class PessoaService {
         return pessoaRepository.save(pessoa);
     }
 
-    public List<Pessoa> findAllPessoas() {
-        return pessoaRepository.findAll();
+    public Page<Pessoa> findAllPessoas(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        return pessoaRepository.findAll(pageable);
     }
 
     public Pessoa findPessoaById(Long id) {
@@ -55,7 +58,7 @@ public class PessoaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pessoa não encontrada com o CPF " + cpf));
     }
 
-    public List<Pessoa> searchPessoaByIdOrNomeOrCpf(String query) {
+    public List<Pessoa> searchPessoa(String query) {
         List<Pessoa> results = new ArrayList<>();
 
         try {
@@ -65,9 +68,16 @@ public class PessoaService {
             // Continua a pesquisa se não for ID
         }
 
-        results.addAll(pessoaRepository.findByNomeContainingOrCpfIgnoreCase(query, sanitizeString(query)));
+        results.addAll(pessoaRepository.searchPessoa(query, sanitizeString(query)));
 
-        return results;
+        List<Pessoa> newResults = new ArrayList<>();
+        for (Pessoa p : results) {
+           if (!newResults.contains(p)) {
+               newResults.add(p);
+           }
+        }
+
+        return newResults;
     }
 
     public Pessoa updatePessoa(Long id, PessoaDTO pessoaDTO) {

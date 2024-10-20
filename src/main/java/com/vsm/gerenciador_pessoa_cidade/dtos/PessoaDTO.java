@@ -13,7 +13,7 @@ public class PessoaDTO {
     private String numero;
     private String bairro;
     private String cep;
-    private int cidadeId;
+    private Long cidadeId;
     private String telefone;
     private String email;
 }

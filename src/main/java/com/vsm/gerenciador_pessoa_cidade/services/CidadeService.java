@@ -6,11 +6,11 @@ import com.vsm.gerenciador_pessoa_cidade.exceptions.ResourceNotFoundException;
 import com.vsm.gerenciador_pessoa_cidade.repositories.CidadeRepository;
 import com.vsm.gerenciador_pessoa_cidade.entities.Cidade;
 import com.vsm.gerenciador_pessoa_cidade.dtos.CidadeDTO;
-import com.vsm.gerenciador_pessoa_cidade.repositories.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -18,9 +18,6 @@ public class CidadeService {
 
     @Autowired
     private CidadeRepository cidadeRepository;
-
-    @Autowired
-    private PessoaRepository pessoaRepository;
 
     public Cidade createCidade(CidadeDTO cidadeDTO) {
         Cidade cidade = new Cidade();
@@ -34,7 +31,7 @@ public class CidadeService {
         return cidadeRepository.save(cidade);
     }
 
-    public List<Cidade> getAllCidades() {
+    public List<Cidade> findAllCidades() {
         return cidadeRepository.findAll();
     }
 
@@ -43,19 +40,9 @@ public class CidadeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada com ID " + id));
     }
 
-    public List<Cidade> searchCidadeByIdOrNomeOrUf(String query) {
-        List<Cidade> results = new ArrayList<>();
-
-        try {
-            Long id = Long.valueOf(query);
-            cidadeRepository.findById(id).ifPresent(results::add);
-        } catch (NumberFormatException e) {
-            // Continua a pesquisa se não for ID
-        }
-
-        results.addAll(cidadeRepository.findByNomeContainingOrUfIgnoreCase(query, query));
-
-        return results;
+    public Page<Cidade> searchCidade(String query, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        return this.cidadeRepository.searchCidade(query, pageable);
     }
 
     public Cidade findCidadeByIbge(int ibge) {
@@ -83,7 +70,7 @@ public class CidadeService {
             throw new ResourceInUseException("Cidade já está sendo utilizada em um ou mais cadastros de pessoa");
         }
 
-        cidadeRepository.deleteById((long) id);
+        cidadeRepository.deleteById(id);
     }
 
     private void mapCidadeDTOToEntity(CidadeDTO cidadeDTO, Cidade cidade) {
